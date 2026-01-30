@@ -6,7 +6,7 @@ const UserModel = require("../models/UserModel")
 const bcrypt = require('bcrypt');
 const JWT = require("jsonwebtoken")
 const generateJWT = require("../utils/genrateJWT")
-getAllUsers = async (req, res) => {
+const getAllUsers = async (req, res) => {
 
     const Users = await UserModel.find()
     res.status(200).json({
@@ -20,7 +20,7 @@ getAllUsers = async (req, res) => {
 }
 
 
-register = async (req, res) => {
+const register = async (req, res) => {
     const { FirstName, lastName, email, Password } = req.body
     const oldUser = await UserModel.findOne({ email })
 
@@ -59,7 +59,7 @@ newUSer.token = token
 }
 
 
-login = async (req, res) => {
+const login = async (req, res) => {
     const { email, Password } = req.body
     if (!email || !Password) {
         return res.status(400).json("email and password are required")
