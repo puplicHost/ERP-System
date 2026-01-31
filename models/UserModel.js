@@ -26,9 +26,6 @@ const UserSchema = new Schema({
     },
     token : {
         type: String
-<<<<<<< HEAD
-    }
-=======
     },
     Role:{
         type : String
@@ -37,8 +34,6 @@ const UserSchema = new Schema({
         type : String,
         default : "uploads"
     }
-    
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
 })
 
 const UserModel = mongoose.model("User", UserSchema)

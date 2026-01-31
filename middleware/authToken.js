@@ -4,7 +4,7 @@ const Auth = (req, res, next) => {
 
 if(!authHeaders){
        return res.status(401).json({
-        massage : "Authentication failed"
+        message : "Authentication failed"
     })
 }
 
@@ -15,7 +15,7 @@ try{
          next()
 }catch(err){
     return res.status(401).json({
-        massage : "Session expired, please login again"
+        message : "Session expired, please login again"
     })
 }
 

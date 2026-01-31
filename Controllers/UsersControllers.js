@@ -6,14 +6,9 @@ const UserModel = require("../models/UserModel")
 const bcrypt = require('bcrypt');
 const JWT = require("jsonwebtoken")
 const generateJWT = require("../utils/genrateJWT")
-<<<<<<< HEAD
-const getAllUsers = async (req, res) => {
-=======
 
 // get all users
-getAllUsers = async (req, res) => {
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
-
+const getAllUsers = async (req, res) => {
     const Users = await UserModel.find()
     res.status(200).json({
         status: "success",
@@ -21,17 +16,10 @@ getAllUsers = async (req, res) => {
             Users
         }
     })
-
-
 }
-<<<<<<< HEAD
 
-
-const register = async (req, res) => {
-    const { FirstName, lastName, email, Password } = req.body
-=======
-// get all users
-getUser = async (req, res) => {
+// get user by id
+const getUser = async (req, res) => {
     const id = req.params.id
     const User = await UserModel.findById(id)
     res.status(200).json({
@@ -40,13 +28,12 @@ getUser = async (req, res) => {
             User
         }
     })
-
-
 }
+
 // create user
-createUser = async (req, res) => {
+const createUser = async (req, res) => {
     const { FirstName, lastName, email, Password, Role } = req.body
-    const avatar = req.file.filename
+    const avatar = req.file ? req.file.filename : null
 
     // hashing password
     const hashedPassword = await bcrypt.hash(Password, 12)
@@ -68,58 +55,54 @@ createUser = async (req, res) => {
             newUSer
         }
     })
-
 }
+
 // update user
-updateUser = async (req, res) => {
+const updateUser = async (req, res) => {
     const { FirstName, lastName, email, Password, Role } = req.body
     const id = req.params.id
-    const avatar = req.file.filename
-    const hashedPassword = await bcrypt.hash(Password, 12)
+    // Check if file was uploaded to upgrade avatar, otherwise keep old or null
+    const avatar = req.file ? req.file.filename : undefined 
+    
+    // Prepare update object
+    const updateData = {
+        FirstName, lastName, email, Role
+    }
+    if (Password) {
+        updateData.Password = await bcrypt.hash(Password, 12)
+    }
+    if (avatar) {
+        updateData.avatar = avatar
+    }
 
-
-    const updateUser = await UserModel.findByIdAndUpdate(id, {
-        FirstName, lastName, email, Password: hashedPassword, Role,avatar
-
-    }, {
+    const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, {
         new: true,
         runValidators: true
     })
 
-
-
-
-
-
     res.status(201).json({
         status: "success",
         data: {
-            updateUser
+            updatedUser
         }
     })
-
 }
 
 // delete user
-deleteuser = async (req, res) => {
-
+const deleteuser = async (req, res) => {
     const id = req.params.id
-
-    const deleteuser = await UserModel.findByIdAndDelete(id)
+    await UserModel.findByIdAndDelete(id)
 
     res.status(201).json({
         status: "success",
         message: "User has been deleted"
-
     })
-
 }
 
 // register
-register = async (req, res) => {
+const register = async (req, res) => {
     const { FirstName, lastName, email, Password, Role } = req.body
 
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
     const oldUser = await UserModel.findOne({ email })
 
     if (oldUser) {
@@ -132,33 +115,17 @@ register = async (req, res) => {
         FirstName,
         lastName,
         email,
-<<<<<<< HEAD
-        Password: hashedPassword
-    })
-    // jwt 
- const token = await generateJWT({
-    email:newUSer.email,
-    id:newUSer._id
- })
-
-
-newUSer.token = token
-=======
         Password: hashedPassword,
-        Role,
-     
+        Role
     })
+    
     // jwt 
     const token = await generateJWT({
         email: newUSer.email,
         id: newUSer._id
     })
 
-
     newUSer.token = token
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
-
-
 
     await newUSer.save()
 
@@ -168,16 +135,10 @@ newUSer.token = token
             newUSer
         }
     })
-
 }
 
-<<<<<<< HEAD
-
-const login = async (req, res) => {
-=======
 // login
-login = async (req, res) => {
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
+const login = async (req, res) => {
     const { email, Password } = req.body
     if (!email || !Password) {
         return res.status(400).json("email and password are required")
@@ -193,41 +154,20 @@ login = async (req, res) => {
     if (!matchPassword) {
         return res.status(400).json("you have wrong password")
     }
-    if (user && matchPassword) {
-
-<<<<<<< HEAD
-         const token = await generateJWT({
-    email:user.email,
-    id:user._id
- })
-        return res.status(200).json({token})
-=======
-        const token = await generateJWT({
-            email: user.email,
-            id: user._id
-        })
-        return res.status(200).json({ token })
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
-
-    }
-
-
-
-
+    
+    const token = await generateJWT({
+        email: user.email,
+        id: user._id
+    })
+    return res.status(200).json({ token })
 }
 
 module.exports = {
     getAllUsers,
-<<<<<<< HEAD
-    register,
-    login
-=======
     getUser,
     register,
     login,
     createUser,
     updateUser,
     deleteuser
->>>>>>> 3a105592fc2d36cd83c5bff57ead7702b694cb40
-
 }
