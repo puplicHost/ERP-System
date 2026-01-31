@@ -18,7 +18,11 @@ Db_Connection()
 
 // Routers 
 const UsersRouter = require("./Routers/UsersRouter");
+const productsRouter = require("./Routers/ProductsRouter");
+const { json } = require("body-parser");
 app.use("/api/users", UsersRouter)
+app.use("/api/products", productsRouter)
+
 
 
 
