@@ -24,7 +24,8 @@ const ProductsSchema = new Schema({
         required: true
     },
     warehouse: {
-        type: Number,
+        type: Schema.Types.ObjectId,
+        ref: 'Warehouse',
         required: true
     },
     images:{

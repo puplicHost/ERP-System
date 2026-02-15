@@ -19,11 +19,15 @@ Db_Connection()
 // Routers 
 const UsersRouter = require("./Routers/UsersRouter");
 const productsRouter = require("./Routers/ProductsRouter");
+const warehousesRouter = require("./Routers/WarehousesRouter");
+const inventoryRouter = require("./Routers/InventoryRouter");
 const RolesRouter = require("./Routers/RolesRouter");
 const PermissionsRouter = require("./Routers/PermissionsRouter");
 const { json } = require("body-parser");
 app.use("/api/users", UsersRouter)
 app.use("/api/products", productsRouter)
+app.use("/api/warehouses", warehousesRouter)
+app.use("/api/inventory", inventoryRouter)
 app.use("/api/roles", RolesRouter)
 app.use("/api/permissions", PermissionsRouter)
 
