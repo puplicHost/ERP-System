@@ -3,7 +3,7 @@ const router = express.Router();
 const Controllers = require("../Controllers/ProductsController")
 const path = require("path")
 const Auth = require("../middleware/authToken")
-const UserRoles = require("../utils/UserRoles")
+const { checkPermission } = require("../middleware/checkPermission")
 
 // multer
 const multer  = require('multer')
@@ -19,11 +19,11 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage: storage })
 
-router.route("/").get(Auth,AllowedTo(UserRoles.SuperAdmin),Controllers.getAllProducts)
-router.route("/getProduct/:id").get(Auth,AllowedTo(UserRoles.SuperAdmin),Controllers.getProduct)
-router.route("/createProduct").post(Auth,upload.single('images'),AllowedTo(UserRoles.SuperAdmin),Controllers.createProduct)
-router.route("/updateProduct/:id").patch(Auth,upload.single('images'),AllowedTo(UserRoles.SuperAdmin),Controllers.updateProduct)
-router.route("/deleteProducts/:id").delete(Auth,AllowedTo(UserRoles.SuperAdmin),Controllers.deleteProducts)
+router.route("/").get(Auth, checkPermission("READ_PRODUCT"), Controllers.getAllProducts)
+router.route("/getProduct/:id").get(Auth, checkPermission("READ_PRODUCT"), Controllers.getProduct)
+router.route("/createProduct").post(Auth, upload.single('images'), checkPermission("CREATE_PRODUCT"), Controllers.createProduct)
+router.route("/updateProduct/:id").patch(Auth, upload.single('images'), checkPermission("UPDATE_PRODUCT"), Controllers.updateProduct)
+router.route("/deleteProducts/:id").delete(Auth, checkPermission("DELETE_PRODUCT"), Controllers.deleteProducts)
 
 
 module.exports = router;

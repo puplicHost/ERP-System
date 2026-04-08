@@ -34,6 +34,24 @@ const UserSchema = new Schema({
     avatar: {
         type: String,
         default: "uploads"
+    },
+    refreshTokens: [{
+        token: {
+            type: String
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    gender: {
+        type: String,
+        enum: ["male", "female"],
+        default: null
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 })
 

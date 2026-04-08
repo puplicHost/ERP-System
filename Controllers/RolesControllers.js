@@ -1,9 +1,25 @@
 const RoleModel = require("../models/RoleModel");
 const asyncWrapper = require("../utils/asyncWrapper");
+const { paginate } = require("../utils/pagination");
 
 const getAllRoles = asyncWrapper(async (req, res) => {
-    const roles = await RoleModel.find();
-    res.status(200).json({ status: "success", data: { roles } });
+    const { page, limit } = req.pagination || { page: 1, limit: 10 };
+
+    const result = await paginate(RoleModel, {
+        page,
+        limit,
+        populate: { path: "permissions", select: "name description" },
+        sort: { createdAt: -1 }
+    });
+
+    res.status(200).json({
+        status: "success",
+        message: "Roles fetched successfully",
+        data: {
+            roles: result.data
+        },
+        pagination: result.pagination
+    });
 });
 
 const createRole = asyncWrapper(async (req, res) => {

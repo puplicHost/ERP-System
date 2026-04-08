@@ -2,14 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Controllers = require('../Controllers/InventoryController');
 const Auth = require('../middleware/authToken');
-const AllowedTo = require('../middleware/AllowedTo');
-const UserRoles = require('../utils/UserRoles');
+const { checkPermission } = require('../middleware/checkPermission');
 
-// Inventory endpoints: allow SuperAdmin and Distributor to manage inventory
-router.route('/').get(Auth, AllowedTo(UserRoles.SuperAdmin), Controllers.getAllInventory);
-router.route('/get/:id').get(Auth, AllowedTo(UserRoles.SuperAdmin), Controllers.getInventoryItem);
-router.route('/create').post(Auth, AllowedTo(UserRoles.SuperAdmin, UserRoles.Distributor), Controllers.createOrUpdateInventory);
-router.route('/adjust').post(Auth, AllowedTo(UserRoles.SuperAdmin, UserRoles.Distributor), Controllers.adjustInventory);
-router.route('/delete/:id').delete(Auth, AllowedTo(UserRoles.SuperAdmin), Controllers.deleteInventory);
+// Inventory endpoints with permission-based authorization
+router.route('/').get(Auth, checkPermission('MANAGE_INVENTORY'), Controllers.getAllInventory);
+router.route('/get/:id').get(Auth, checkPermission('MANAGE_INVENTORY'), Controllers.getInventoryItem);
+router.route('/create').post(Auth, checkPermission('MANAGE_INVENTORY'), Controllers.createOrUpdateInventory);
+router.route('/adjust').post(Auth, checkPermission('MANAGE_INVENTORY'), Controllers.adjustInventory);
+router.route('/delete/:id').delete(Auth, checkPermission('MANAGE_INVENTORY'), Controllers.deleteInventory);
 
 module.exports = router;

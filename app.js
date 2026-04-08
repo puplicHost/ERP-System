@@ -2,6 +2,11 @@ const express = require("express");
 const app = express();
 const dotenv = require("dotenv")
 dotenv.config();
+
+// Environment Validation (MUST be first)
+const validateEnv = require("./config/envValidator");
+validateEnv();
+
 const port = process.env.PORT;
 
 // CORS Configuration
@@ -10,6 +15,10 @@ app.use(corsMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Global Rate Limiting
+const { apiLimiter } = require("./middleware/rateLimiter");
+app.use("/api/", apiLimiter);
 
 // DatabaseConnection
 
@@ -23,7 +32,6 @@ const warehousesRouter = require("./Routers/WarehousesRouter");
 const inventoryRouter = require("./Routers/InventoryRouter");
 const RolesRouter = require("./Routers/RolesRouter");
 const PermissionsRouter = require("./Routers/PermissionsRouter");
-const { json } = require("body-parser");
 app.use("/api/users", UsersRouter)
 app.use("/api/products", productsRouter)
 app.use("/api/warehouses", warehousesRouter)

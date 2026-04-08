@@ -1,5 +1,6 @@
 const WarehouseModel = require('../models/WarehouseModel');
 const asyncWrapper = require('../utils/asyncWrapper');
+const { isValidObjectId } = require('../utils/validators');
 
 const getAllWarehouses = asyncWrapper(async (req, res) => {
   const warehouses = await WarehouseModel.find().populate('assignedTo', 'FirstName lastName email Role');
@@ -8,6 +9,11 @@ const getAllWarehouses = asyncWrapper(async (req, res) => {
 
 const getWarehouse = asyncWrapper(async (req, res) => {
   const { id } = req.params;
+  
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ status: 'error', message: 'Invalid warehouse ID format' });
+  }
+  
   const warehouse = await WarehouseModel.findById(id).populate('assignedTo', 'FirstName lastName email Role');
   if (!warehouse) return res.status(404).json({ status: 'error', message: 'Warehouse not found' });
   res.status(200).json({ status: 'success', data: { warehouse } });
@@ -22,6 +28,11 @@ const createWarehouse = asyncWrapper(async (req, res) => {
 
 const updateWarehouse = asyncWrapper(async (req, res) => {
   const { id } = req.params;
+  
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ status: 'error', message: 'Invalid warehouse ID format' });
+  }
+  
   const updates = req.body;
   const warehouse = await WarehouseModel.findByIdAndUpdate(id, updates, { new: true });
   if (!warehouse) return res.status(404).json({ status: 'error', message: 'Warehouse not found' });
@@ -30,7 +41,13 @@ const updateWarehouse = asyncWrapper(async (req, res) => {
 
 const deleteWarehouse = asyncWrapper(async (req, res) => {
   const { id } = req.params;
-  await WarehouseModel.findByIdAndDelete(id);
+  
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ status: 'error', message: 'Invalid warehouse ID format' });
+  }
+  
+  const warehouse = await WarehouseModel.findByIdAndDelete(id);
+  if (!warehouse) return res.status(404).json({ status: 'error', message: 'Warehouse not found' });
   res.status(200).json({ status: 'success', message: 'Warehouse deleted' });
 });
 
@@ -38,7 +55,15 @@ const deleteWarehouse = asyncWrapper(async (req, res) => {
 const assignWarehouse = asyncWrapper(async (req, res) => {
   const { id } = req.params; // warehouse id
   const { distributorId } = req.body;
-  if (!distributorId) return res.status(400).json({ status: 'error', message: 'distributorId is required' });
+  
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ status: 'error', message: 'Invalid warehouse ID format' });
+  }
+  
+  if (!distributorId || !isValidObjectId(distributorId)) {
+    return res.status(400).json({ status: 'error', message: 'Valid distributorId is required' });
+  }
+  
   const warehouse = await WarehouseModel.findByIdAndUpdate(id, { assignedTo: distributorId }, { new: true }).populate('assignedTo', 'FirstName lastName email Role');
   if (!warehouse) return res.status(404).json({ status: 'error', message: 'Warehouse not found' });
   res.status(200).json({ status: 'success', data: { warehouse } });

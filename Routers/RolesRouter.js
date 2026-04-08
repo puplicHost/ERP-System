@@ -2,18 +2,18 @@ const express = require("express");
 const router = express.Router();
 const rolesController = require("../Controllers/RolesControllers");
 const Auth = require("../middleware/authToken");
-const AllowedTo = require("../middleware/AllowedTo");
-const UserRoles = require("../utils/UserRoles");
+const { checkPermission } = require("../middleware/checkPermission");
+const { getPaginationParams } = require("../utils/pagination");
 
-// Only Super Admin can manage roles
+// Role management with permission-based authorization
 router.route("/")
-    .get(Auth, AllowedTo(UserRoles.SuperAdmin), rolesController.getAllRoles)
-    .post(Auth, AllowedTo(UserRoles.SuperAdmin), rolesController.createRole);
+    .get(Auth, checkPermission("READ_ROLE"), getPaginationParams, rolesController.getAllRoles)
+    .post(Auth, checkPermission("CREATE_ROLE"), rolesController.createRole);
 
 router.route("/:id")
-    .delete(Auth, AllowedTo(UserRoles.SuperAdmin), rolesController.deleteRole);
+    .delete(Auth, checkPermission("DELETE_ROLE"), rolesController.deleteRole);
 
 router.route("/:roleId/permissions")
-    .post(Auth, AllowedTo(UserRoles.SuperAdmin), rolesController.assignPermissions);
+    .post(Auth, checkPermission("UPDATE_ROLE"), rolesController.assignPermissions);
 
 module.exports = router;
