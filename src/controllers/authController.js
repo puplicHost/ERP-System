@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Role = require('../models/Role');
-const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
+const RefreshToken = require('../models/RefreshToken');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../config/jwt');
 
 const register = async (req, res, next) => {
   try {
@@ -35,7 +36,15 @@ const register = async (req, res, next) => {
     // Generate tokens
     const permissions = role.permissions.map(p => p.toString());
     const accessToken = generateAccessToken(user._id, permissions);
-    const refreshToken = generateRefreshToken(user._id);
+    const refreshTokenValue = generateRefreshToken(user._id);
+
+    // Save refresh token to database
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await RefreshToken.create({
+      token: refreshTokenValue,
+      user: user._id,
+      expiresAt
+    });
 
     res.success({
       user: {
@@ -50,7 +59,7 @@ const register = async (req, res, next) => {
         }
       },
       accessToken,
-      refreshToken
+      refreshToken: refreshTokenValue
     }, 'User registered successfully', 201);
   } catch (error) {
     next(error);
@@ -85,11 +94,19 @@ const login = async (req, res, next) => {
     // Generate tokens
     const permissions = user.role.permissions.map(p => p.toString());
     const accessToken = generateAccessToken(user._id, permissions);
-    const refreshToken = generateRefreshToken(user._id);
+    const refreshTokenValue = generateRefreshToken(user._id);
+
+    // Save refresh token to database
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await RefreshToken.create({
+      token: refreshTokenValue,
+      user: user._id,
+      expiresAt
+    });
 
     res.success({
       accessToken,
-      refreshToken,
+      refreshToken: refreshTokenValue,
       user: {
         _id: user._id,
         email: user.email,
@@ -134,8 +151,91 @@ const getUserData = async (req, res, next) => {
   }
 };
 
+const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.error('Refresh token is required', 400);
+    }
+
+    // Verify refresh token
+    const decoded = verifyRefreshToken(refreshToken);
+
+    // Find refresh token in database
+    const tokenRecord = await RefreshToken.findOne({ user: decoded.userId });
+    
+    if (!tokenRecord) {
+      return res.error('Invalid refresh token', 401);
+    }
+
+    // Verify token matches
+    if (!tokenRecord.verifyToken(refreshToken)) {
+      return res.error('Invalid refresh token', 401);
+    }
+
+    // Check if token is revoked
+    if (tokenRecord.isRevoked) {
+      return res.error('Refresh token has been revoked', 401);
+    }
+
+    // Check if token is expired
+    if (tokenRecord.expiresAt < new Date()) {
+      return res.error('Refresh token expired', 401);
+    }
+
+    // Find user
+    const user = await User.findById(decoded.userId).populate('role');
+    
+    if (!user || !user.isActive) {
+      return res.error('User not found or inactive', 401);
+    }
+
+    // Generate new access token
+    const permissions = user.role.permissions.map(p => p.toString());
+    const newAccessToken = generateAccessToken(user._id, permissions);
+
+    res.success({
+      accessToken: newAccessToken,
+      expiresIn: 900 // 15 minutes in seconds
+    }, 'Token refreshed successfully');
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.error('Refresh token expired', 401);
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.error('Invalid refresh token', 401);
+    }
+    next(error);
+  }
+};
+
+const logout = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.error('Refresh token is required', 400);
+    }
+
+    // Find and revoke refresh token
+    const tokenRecord = await RefreshToken.findOne({ user: req.userId });
+    
+    if (tokenRecord && tokenRecord.verifyToken(refreshToken)) {
+      tokenRecord.isRevoked = true;
+      await tokenRecord.save();
+    }
+
+    res.success(null, 'Logged out successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
-  getUserData
+  getUserData,
+  refreshToken,
+  logout
 };

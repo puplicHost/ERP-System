@@ -1,28 +1,22 @@
 const Role = require('../models/Role');
+const paginate = require('../utils/pagination');
 
 const listRoles = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    const [roles, total] = await Promise.all([
-      Role.find()
-        .skip(skip)
-        .limit(limit)
-        .populate('permissions', 'name code')
-        .sort({ level: 1, name: 1 }),
-      Role.countDocuments()
-    ]);
+    
+    const result = await paginate(Role, {}, page, limit);
+    
+    const roles = await Role.find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('permissions', 'name code')
+      .sort({ level: 1, name: 1 });
 
     res.success({
       roles,
-      pagination: {
-        page,
-        limit,
-        total,
-        last_page: Math.ceil(total / limit)
-      }
+      pagination: result.pagination
     });
   } catch (error) {
     next(error);

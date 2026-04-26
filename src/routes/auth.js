@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const authenticate = require('../middleware/auth');
+const loginLimiter = require('../middleware/rateLimiter');
 
 // Validation rules
 const registerValidation = [
@@ -18,9 +19,15 @@ const loginValidation = [
   body('password').notEmpty().withMessage('Password is required')
 ];
 
+const refreshTokenValidation = [
+  body('refreshToken').notEmpty().withMessage('Refresh token is required')
+];
+
 // Routes
 router.post('/register', registerValidation, authController.register);
-router.post('/login', loginValidation, authController.login);
+router.post('/login', loginValidation, loginLimiter, authController.login);
+router.post('/refresh', refreshTokenValidation, authController.refreshToken);
+router.post('/logout', authenticate, authController.logout);
 router.get('/userdata', authenticate, authController.getUserData);
 
 module.exports = router;
