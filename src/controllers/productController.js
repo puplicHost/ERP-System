@@ -93,30 +93,45 @@ const deleteProduct = async (req, res, next) => {
 
 const searchProducts = async (req, res, next) => {
   try {
-    const { q } = req.query;
+    const { q, category, minPrice, maxPrice, sortBy, sortOrder } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    if (!q) {
-      return res.error('Search query is required', 400);
-    }
+    const query = { isActive: true };
 
-    const query = {
-      $or: [
+    // Text search
+    if (q) {
+      query.$or = [
         { name: { $regex: q, $options: 'i' } },
         { sku: { $regex: q, $options: 'i' } },
         { description: { $regex: q, $options: 'i' } },
         { tags: { $in: [new RegExp(q, 'i')] } }
-      ],
-      isActive: true
-    };
+      ];
+    }
+
+    // Category filter
+    if (category) query.category = category;
+
+    // Price range filter
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = parseFloat(minPrice);
+      if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+    }
+
+    // Sorting
+    let sort = { createdAt: -1 };
+    if (sortBy) {
+      const sortDirection = sortOrder === 'asc' ? 1 : -1;
+      sort = { [sortBy]: sortDirection };
+    }
 
     const result = await paginate(Product, query, page, limit);
     
     const products = await Product.find(query)
       .skip((page - 1) * limit)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort(sort);
 
     res.success({
       products,
